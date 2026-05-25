@@ -64,10 +64,17 @@ class text_filter extends moodle_text_filter {
 
         $text = "";
         $realxmltext = str_replace(["[", "]"], ["<", ">"], $matches[0]);
-        try {
-            $comptag = simplexml_load_string($realxmltext);
-        } catch (Exception $e) {
-            return $e->getMessage();
+        libxml_use_internal_errors(true);
+        $comptag = simplexml_load_string($realxmltext);
+        $xmlerrors = libxml_get_errors();
+        libxml_clear_errors();
+        libxml_use_internal_errors(false);
+        if ($comptag === false) {
+            if (!empty($xmlerrors)) {
+                $e = $xmlerrors[0];
+                return 'simplexml_load_string(): Entity: line ' . $e->line . ': parser error : ' . trim($e->message);
+            }
+            return '';
         }
         // Default values.
         $userid = $USER->id;
